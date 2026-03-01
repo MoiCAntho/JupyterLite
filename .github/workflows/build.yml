@@ -23,6 +23,19 @@ jobs:
           pip install --upgrade pip
           pip install jupyterlite jupyterlite-xeus
 
+      - name: Install micromamba
+        run: |
+          mkdir -p ~/.local/bin
+          curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest \
+            | tar -xvj -C ~/.local/bin --strip-components=1 bin/micromamba
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          micromamba --version
+
+      - name: Set mamba root
+        run: |
+          echo "MAMBA_ROOT_PREFIX=$HOME/mamba-root" >> $GITHUB_ENV
+          mkdir -p "$HOME/mamba-root"
+
       - name: Build JupyterLite
         working-directory: jupyterlite
         run: |

@@ -18,7 +18,6 @@ dependencies:
   - astropy
   - sympy
   - seaborn
-  - pyephem
 
   - pip
   - pip:

@@ -17,7 +17,6 @@ dependencies:
   - matplotlib
   - astropy
   - sympy
-  - seaborn
 
   - pip
   - pip:

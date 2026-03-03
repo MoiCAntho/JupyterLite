@@ -7,3 +7,19 @@ channels:
 dependencies:
   - xeus-python
   - xeus-octave
+  - xeus-javascript
+  - xeus-r
+  - xeus-cpp
+
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - astropy
+  - sympy
+  - seaborn
+  - pyephem
+
+  - pip
+  - pip:
+    - git+https://github.com/<USER>/<REPO>.git@<TAG_OU_COMMIT>

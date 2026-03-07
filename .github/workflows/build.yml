@@ -36,6 +36,16 @@ jobs:
           echo "MAMBA_ROOT_PREFIX=$HOME/mamba-root" >> $GITHUB_ENV
           mkdir -p "$HOME/mamba-root"
 
+      - name: Copy repo files into JupyterLite source
+        run: |
+          mkdir -p jupyterlite/files
+          rm -rf jupyterlite/files/*
+          if [ -d files ]; then
+            cp -r files/. jupyterlite/files/
+          else
+            echo "No root files directory found, skipping notebook copy."
+          fi
+
       - name: Build JupyterLite
         working-directory: jupyterlite
         run: |

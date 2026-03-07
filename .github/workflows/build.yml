@@ -21,7 +21,7 @@ jobs:
       - name: Install JupyterLite
         run: |
           pip install --upgrade pip
-          pip install jupyterlite jupyterlite-xeus
+          pip install jupyterlite jupyterlite-xeus jupyter-server jupyterlab_server
 
       - name: Install micromamba
         run: |
@@ -36,15 +36,17 @@ jobs:
           echo "MAMBA_ROOT_PREFIX=$HOME/mamba-root" >> $GITHUB_ENV
           mkdir -p "$HOME/mamba-root"
 
-      - name: Copy repo files into JupyterLite source
+      - name: Copy root files into JupyterLite source
         run: |
           mkdir -p jupyterlite/files
           rm -rf jupyterlite/files/*
           if [ -d files ]; then
             cp -r files/. jupyterlite/files/
           else
-            echo "No root files directory found, skipping notebook copy."
+            echo "No root files directory found, skipping custom content copy."
           fi
+          echo "Contents of jupyterlite/files:"
+          find jupyterlite/files -maxdepth 3 -type f || true
 
       - name: Build JupyterLite
         working-directory: jupyterlite

@@ -36,17 +36,17 @@ jobs:
           echo "MAMBA_ROOT_PREFIX=$HOME/mamba-root" >> $GITHUB_ENV
           mkdir -p "$HOME/mamba-root"
 
-      - name: Copy notebooks into internal folder
+      - name: Copy notebooks into hidden JupyterLite folder
         run: |
-          rm -rf jupyterlite/files/_hidden_notebooks
-          mkdir -p jupyterlite/files/_hidden_notebooks
-
+          rm -rf jupyterlite/notebooks
+          mkdir -p jupyterlite/notebooks
+      
           if [ -d files ]; then
-            cp -r files/. jupyterlite/files/_hidden_notebooks/
+            cp -r files/. jupyterlite/notebooks/
           fi
-
+      
           echo "Copied notebooks:"
-          find jupyterlite/files/_hidden_notebooks -maxdepth 4 -type f || true
+          find jupyterlite/notebooks -maxdepth 4 -type f || true
 
       - name: Write JupyterLite config
         run: |

@@ -81,3 +81,10 @@ jobs:
         with:
           name: jupyterlite-site
           path: jupyterlite/_output
+
+      - name: Show generated tree
+        run: |
+          echo "===== _output root ====="
+          find jupyterlite/_output -maxdepth 2 -type d | sort
+          echo "===== _output files ====="
+          find jupyterlite/_output/files -maxdepth 4 -print || true

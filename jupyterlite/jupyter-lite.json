@@ -1,7 +1,7 @@
 "LiteBuildConfig": {
     "contents": [
       "files",
-      ".notebooks"
+      "_notebooks"
     ]
   }
 

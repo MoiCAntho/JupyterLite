@@ -37,58 +37,90 @@ jobs:
           echo "MAMBA_ROOT_PREFIX=$HOME/mamba-root" >> $GITHUB_ENV
           mkdir -p "$HOME/mamba-root"
 
-      - name: Build base JupyterLite
-        working-directory: jupyterlite
+      - name: Prepare build folders
+        run: |
+          rm -rf build-general build-eleves site
+          mkdir -p build-general build-eleves site/jupyterlite site/jupyterlite-eleves
+
+          cp -r jupyterlite/. build-general/
+          cp -r jupyterlite/. build-eleves/
+
+      - name: Build general version
+        working-directory: build-general
         run: |
           python -m jupyterlite build . \
             --XeusAddon.environment_file=environment.yml
 
-      - name: Create restrictive student app
+      - name: Build student version
+        working-directory: build-eleves
         run: |
-          rm -rf jupyterlite/_output/lab-eleves
-          cp -r jupyterlite/_output/lab jupyterlite/_output/lab-eleves
-      
+          python -m jupyterlite build . \
+            --XeusAddon.environment_file=environment.yml
+
+      - name: Restrict student version only
+        run: |
           python - <<'PY'
           import json
           from pathlib import Path
-      
-          p = Path("jupyterlite/_output/lab-eleves/jupyter-lite.json")
+
+          p = Path("build-eleves/_output/lab/jupyter-lite.json")
           data = json.loads(p.read_text(encoding="utf-8"))
-      
+
           cfg = data.setdefault("jupyter-config-data", {})
           disabled = cfg.setdefault("disabledExtensions", [])
-      
+
           ext = "@jupyterlab/filebrowser-extension:widget"
           if ext not in disabled:
               disabled.append(ext)
-      
+
           cfg["workspacesStorageName"] = "JupyterLite Eleves Storage"
-      
+
           p.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
           PY
-      
-          echo "===== lab-eleves/jupyter-lite.json ====="
-          cat jupyterlite/_output/lab-eleves/jupyter-lite.json
 
-      - name: Copy static notebooks into generated site
+      - name: Set separate storage for general version
         run: |
-          mkdir -p jupyterlite/_output/docs/notebooks
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          p = Path("build-general/_output/lab/jupyter-lite.json")
+          data = json.loads(p.read_text(encoding="utf-8"))
+
+          cfg = data.setdefault("jupyter-config-data", {})
+          cfg["workspacesStorageName"] = "JupyterLite General Storage"
+
+          p.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+          PY
+
+      - name: Copy static notebooks into both generated sites
+        run: |
+          mkdir -p build-general/_output/docs/notebooks
+          mkdir -p build-eleves/_output/docs/notebooks
+
           if [ -d docs/notebooks ]; then
-            cp -r docs/notebooks/. jupyterlite/_output/docs/notebooks/
+            cp -r docs/notebooks/. build-general/_output/docs/notebooks/
+            cp -r docs/notebooks/. build-eleves/_output/docs/notebooks/
           else
             echo "No docs/notebooks directory found."
           fi
 
-          echo "===== copied docs/notebooks ====="
-          find jupyterlite/_output/docs/notebooks -maxdepth 4 -type f || true
-
-      - name: Show generated tree
+      - name: Assemble final artifact
         run: |
-          echo "===== output root ====="
-          find jupyterlite/_output -maxdepth 2 -type d | sort
+          cp -r build-general/_output/. site/jupyterlite/
+          cp -r build-eleves/_output/. site/jupyterlite-eleves/
+
+      - name: Show final tree
+        run: |
+          echo "===== GENERAL ====="
+          find site/jupyterlite -maxdepth 2 -type d | sort
+          echo "===== ELEVES ====="
+          find site/jupyterlite-eleves -maxdepth 2 -type d | sort
+          echo "===== NOTEBOOKS ====="
+          find site/jupyterlite-eleves/docs/notebooks -maxdepth 3 -type f || true
 
       - name: Upload generated site
         uses: actions/upload-artifact@v4
         with:
           name: jupyterlite-site
-          path: jupyterlite/_output
+          path: site

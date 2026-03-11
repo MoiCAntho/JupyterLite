@@ -1,3 +1,8 @@
 {
-  "LiteBuildConfig": {}
+  "jupyter-config-data": {
+    "disabledExtensions": [
+      "@jupyterlab/filebrowser-extension:widget"
+    ],
+    "workspacesStorageName": "JupyterLite Eleves Storage"
+  }
 }

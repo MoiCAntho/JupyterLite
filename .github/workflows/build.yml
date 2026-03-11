@@ -36,24 +36,21 @@ jobs:
           echo "MAMBA_ROOT_PREFIX=$HOME/mamba-root" >> $GITHUB_ENV
           mkdir -p "$HOME/mamba-root"
 
-      - name: Copy private notebooks into JupyterLite source
+      - name: Copy private notebooks into hidden JupyterLite folder
         run: |
-          rm -rf jupyterlite/_notebooks
-          mkdir -p jupyterlite/_notebooks
+          rm -rf jupyterlite/files/.notebooks
+          mkdir -p jupyterlite/files/.notebooks
           if [ -d files ]; then
-            cp -r files/. jupyterlite/_notebooks/
+            cp -r files/. jupyterlite/files/.notebooks/
           else
             echo "No root files directory found, skipping custom content copy."
           fi
-          echo "Contents copied into jupyterlite/_notebooks:"
-          find jupyterlite/_notebooks -maxdepth 4 -type f || true
+          find jupyterlite/files/.notebooks -maxdepth 4 -type f || true
 
       - name: Build JupyterLite
         working-directory: jupyterlite
         run: |
           python -m jupyterlite build . \
-            --contents files \
-            --contents _notebooks \
             --XeusAddon.environment_file=environment.yml
 
       - name: Upload site

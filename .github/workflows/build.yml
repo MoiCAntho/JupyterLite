@@ -36,27 +36,22 @@ jobs:
           echo "MAMBA_ROOT_PREFIX=$HOME/mamba-root" >> $GITHUB_ENV
           mkdir -p "$HOME/mamba-root"
 
-      - name: Prepare hidden notebooks
+      - name: Copy notebooks into internal folder
         run: |
-          rm -rf jupyterlite/files/.notebooks
-          mkdir -p jupyterlite/files/.notebooks
+          rm -rf jupyterlite/files/_hidden_notebooks
+          mkdir -p jupyterlite/files/_hidden_notebooks
 
           if [ -d files ]; then
-            cp -r files/. jupyterlite/files/.notebooks/
-          else
-            echo "No root files directory found."
+            cp -r files/. jupyterlite/files/_hidden_notebooks/
           fi
 
-          echo "Tree:"
-          find jupyterlite/files -maxdepth 4 -type f || true
+          echo "Copied notebooks:"
+          find jupyterlite/files/_hidden_notebooks -maxdepth 4 -type f || true
 
       - name: Write JupyterLite config
         run: |
           cat > jupyterlite/jupyter_lite_config.json <<'EOF'
           {
-            "ContentsManager": {
-              "allow_hidden": true
-            },
             "LiteBuildConfig": {
               "contents": [
                 "files"
@@ -73,18 +68,14 @@ jobs:
         run: |
           python -m jupyterlite build . \
             --contents files \
-            --ContentsManager.allow_hidden=True \
             --XeusAddon.environment_file=environment.yml
+
+      - name: Show generated files
+        run: |
+          find jupyterlite/_output/files -maxdepth 4 -print || true
 
       - name: Upload site
         uses: actions/upload-artifact@v4
         with:
           name: jupyterlite-site
           path: jupyterlite/_output
-
-      - name: Show generated tree
-        run: |
-          echo "===== _output root ====="
-          find jupyterlite/_output -maxdepth 2 -type d | sort
-          echo "===== _output files ====="
-          find jupyterlite/_output/files -maxdepth 4 -print || true

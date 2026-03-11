@@ -45,6 +45,16 @@ jobs:
           cp -r jupyterlite/. build-general/
           cp -r jupyterlite/. build-eleves/
 
+      - name: Ensure config files exist
+        run: |
+          if [ ! -f build-general/jupyter_lite_config.json ]; then
+            echo "{}" > build-general/jupyter_lite_config.json
+          fi
+
+          if [ ! -f build-eleves/jupyter_lite_config.json ]; then
+            echo "{}" > build-eleves/jupyter_lite_config.json
+          fi
+
       - name: Build general version
         working-directory: build-general
         run: |
@@ -57,28 +67,7 @@ jobs:
           python -m jupyterlite build . \
             --XeusAddon.environment_file=environment.yml
 
-      - name: Restrict student version only
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          p = Path("build-eleves/_output/lab/jupyter-lite.json")
-          data = json.loads(p.read_text(encoding="utf-8"))
-
-          cfg = data.setdefault("jupyter-config-data", {})
-          disabled = cfg.setdefault("disabledExtensions", [])
-
-          ext = "@jupyterlab/filebrowser-extension:widget"
-          if ext not in disabled:
-              disabled.append(ext)
-
-          cfg["workspacesStorageName"] = "JupyterLite Eleves Storage"
-
-          p.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-          PY
-
-      - name: Set separate storage for general version
+      - name: Configure general version storage
         run: |
           python - <<'PY'
           import json
@@ -88,10 +77,40 @@ jobs:
           data = json.loads(p.read_text(encoding="utf-8"))
 
           cfg = data.setdefault("jupyter-config-data", {})
-          cfg["workspacesStorageName"] = "JupyterLite General Storage"
+          cfg["workspacesStorageName"] = "JupyterLite General Workspaces"
+          cfg["contentsStorageName"] = "JupyterLite General Contents"
 
           p.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
           PY
+
+      - name: Configure restrictive student version
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          p = Path("build-eleves/_output/lab/jupyter-lite.json")
+          data = json.loads(p.read_text(encoding="utf-8"))
+
+          cfg = data.setdefault("jupyter-config-data", {})
+
+          disabled = cfg.setdefault("disabledExtensions", [])
+          ext = "@jupyterlab/filebrowser-extension:widget"
+          if ext not in disabled:
+              disabled.append(ext)
+
+          cfg["workspacesStorageName"] = "JupyterLite Eleves Workspaces"
+          cfg["contentsStorageName"] = "JupyterLite Eleves Contents"
+          cfg["enableMemoryStorage"] = True
+          cfg["contentsStorageDrivers"] = ["memoryStorageDriver"]
+
+          p.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+          PY
+
+      - name: Rename student lab app to lab-eleves
+        run: |
+          rm -rf build-eleves/_output/lab-eleves
+          mv build-eleves/_output/lab build-eleves/_output/lab-eleves
 
       - name: Copy static notebooks into both generated sites
         run: |
@@ -116,8 +135,14 @@ jobs:
           find site/jupyterlite -maxdepth 2 -type d | sort
           echo "===== ELEVES ====="
           find site/jupyterlite-eleves -maxdepth 2 -type d | sort
-          echo "===== NOTEBOOKS ====="
+          echo "===== NOTEBOOKS GENERAL ====="
+          find site/jupyterlite/docs/notebooks -maxdepth 3 -type f || true
+          echo "===== NOTEBOOKS ELEVES ====="
           find site/jupyterlite-eleves/docs/notebooks -maxdepth 3 -type f || true
+          echo "===== GENERAL LAB CONFIG ====="
+          cat site/jupyterlite/lab/jupyter-lite.json || true
+          echo "===== ELEVES LAB CONFIG ====="
+          cat site/jupyterlite-eleves/lab-eleves/jupyter-lite.json || true
 
       - name: Upload generated site
         uses: actions/upload-artifact@v4

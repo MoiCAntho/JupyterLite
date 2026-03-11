@@ -47,18 +47,28 @@ jobs:
         run: |
           rm -rf jupyterlite/_output/lab-eleves
           cp -r jupyterlite/_output/lab jupyterlite/_output/lab-eleves
-
-          cat > jupyterlite/_output/lab-eleves/jupyter-lite.json <<'EOF'
-          {
-            "jupyter-lite-schema-version": 0,
-            "jupyter-config-data": {
-              "disabledExtensions": [
-                "@jupyterlab/filebrowser-extension"
-              ],
-              "workspacesStorageName": "JupyterLite Eleves Storage"
-            }
-          }
-          EOF
+      
+          python - <<'PY'
+          import json
+          from pathlib import Path
+      
+          p = Path("jupyterlite/_output/lab-eleves/jupyter-lite.json")
+          data = json.loads(p.read_text(encoding="utf-8"))
+      
+          cfg = data.setdefault("jupyter-config-data", {})
+          disabled = cfg.setdefault("disabledExtensions", [])
+      
+          ext = "@jupyterlab/filebrowser-extension"
+          if ext not in disabled:
+              disabled.append(ext)
+      
+          cfg["workspacesStorageName"] = "JupyterLite Eleves Storage"
+      
+          p.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+          PY
+      
+          echo "===== lab-eleves/jupyter-lite.json ====="
+          cat jupyterlite/_output/lab-eleves/jupyter-lite.json
 
       - name: Copy static notebooks into generated site
         run: |

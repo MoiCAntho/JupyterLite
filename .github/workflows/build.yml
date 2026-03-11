@@ -52,6 +52,8 @@ jobs:
         working-directory: jupyterlite
         run: |
           python -m jupyterlite build . \
+            --contents files \
+            --contents _notebooks \
             --XeusAddon.environment_file=environment.yml
 
       - name: Upload site

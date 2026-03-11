@@ -10,56 +10,71 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout repo
         uses: actions/checkout@v4
-
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install jupyterlite jupyterlite-xeus jupyter-server jupyterlab_server
-
 
       - name: Install micromamba
         run: |
           mkdir -p ~/.local/bin
           curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest \
-          | tar -xvj -C ~/.local/bin --strip-components=1 bin/micromamba
+            | tar -xvj -C ~/.local/bin --strip-components=1 bin/micromamba
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-
+          micromamba --version
 
       - name: Set mamba root
         run: |
           echo "MAMBA_ROOT_PREFIX=$HOME/mamba-root" >> $GITHUB_ENV
           mkdir -p "$HOME/mamba-root"
 
-
-      - name: Copy notebooks into hidden folder
+      - name: Prepare hidden notebooks
         run: |
           rm -rf jupyterlite/files/.notebooks
           mkdir -p jupyterlite/files/.notebooks
 
           if [ -d files ]; then
             cp -r files/. jupyterlite/files/.notebooks/
+          else
+            echo "No root files directory found."
           fi
 
-          echo "Copied notebooks:"
-          find jupyterlite/files/.notebooks -maxdepth 4 -type f || true
+          echo "Tree:"
+          find jupyterlite/files -maxdepth 4 -type f || true
 
+      - name: Write JupyterLite config
+        run: |
+          cat > jupyterlite/jupyter_lite_config.json <<'EOF'
+          {
+            "ContentsManager": {
+              "allow_hidden": true
+            },
+            "LiteBuildConfig": {
+              "contents": [
+                "files"
+              ]
+            }
+          }
+          EOF
+
+          echo "----- jupyter_lite_config.json -----"
+          cat jupyterlite/jupyter_lite_config.json
 
       - name: Build JupyterLite
         working-directory: jupyterlite
         run: |
           python -m jupyterlite build . \
+            --contents files \
+            --ContentsManager.allow_hidden=True \
             --XeusAddon.environment_file=environment.yml
-
 
       - name: Upload site
         uses: actions/upload-artifact@v4

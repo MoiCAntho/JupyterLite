@@ -60,12 +60,22 @@ jobs:
           }
           EOF
 
+      - name: Copy static notebooks into generated site
+        run: |
+          mkdir -p jupyterlite/_output/docs/notebooks
+          if [ -d docs/notebooks ]; then
+            cp -r docs/notebooks/. jupyterlite/_output/docs/notebooks/
+          else
+            echo "No docs/notebooks directory found."
+          fi
+
+          echo "===== copied docs/notebooks ====="
+          find jupyterlite/_output/docs/notebooks -maxdepth 4 -type f || true
+
       - name: Show generated tree
         run: |
           echo "===== output root ====="
           find jupyterlite/_output -maxdepth 2 -type d | sort
-          echo "===== restrictive app config ====="
-          cat jupyterlite/_output/lab-eleves/jupyter-lite.json
 
       - name: Upload generated site
         uses: actions/upload-artifact@v4

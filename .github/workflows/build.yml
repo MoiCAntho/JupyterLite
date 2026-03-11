@@ -10,48 +10,56 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout repo
         uses: actions/checkout@v4
+
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install JupyterLite
+
+      - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install jupyterlite jupyterlite-xeus jupyter-server jupyterlab_server
+          pip install jupyterlite jupyterlite-xeus
+
 
       - name: Install micromamba
         run: |
           mkdir -p ~/.local/bin
           curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest \
-            | tar -xvj -C ~/.local/bin --strip-components=1 bin/micromamba
+          | tar -xvj -C ~/.local/bin --strip-components=1 bin/micromamba
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          micromamba --version
+
 
       - name: Set mamba root
         run: |
           echo "MAMBA_ROOT_PREFIX=$HOME/mamba-root" >> $GITHUB_ENV
           mkdir -p "$HOME/mamba-root"
 
-      - name: Copy private notebooks into hidden JupyterLite folder
+
+      - name: Copy notebooks into hidden folder
         run: |
-          rm -rf jupyterlite/files/_notebooks
-          mkdir -p jupyterlite/files/_notebooks
+          rm -rf jupyterlite/files/.notebooks
+          mkdir -p jupyterlite/files/.notebooks
+
           if [ -d files ]; then
-            cp -r files/. jupyterlite/files/_notebooks/
-          else
-            echo "No root files directory found, skipping custom content copy."
+            cp -r files/. jupyterlite/files/.notebooks/
           fi
-          find jupyterlite/files/_notebooks -maxdepth 4 -type f || true
+
+          echo "Copied notebooks:"
+          find jupyterlite/files/.notebooks -maxdepth 4 -type f || true
+
 
       - name: Build JupyterLite
         working-directory: jupyterlite
         run: |
           python -m jupyterlite build . \
             --XeusAddon.environment_file=environment.yml
+
 
       - name: Upload site
         uses: actions/upload-artifact@v4

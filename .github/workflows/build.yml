@@ -36,17 +36,17 @@ jobs:
           echo "MAMBA_ROOT_PREFIX=$HOME/mamba-root" >> $GITHUB_ENV
           mkdir -p "$HOME/mamba-root"
 
-      - name: Copy root files into JupyterLite source
+      - name: Copy root files into private JupyterLite folder
         run: |
-          mkdir -p jupyterlite/files
-          rm -rf jupyterlite/files/*
+          mkdir -p jupyterlite/files/_prive
+          rm -rf jupyterlite/files/_prive/*
           if [ -d files ]; then
-            cp -r files/. jupyterlite/files/
+            cp -r files/. jupyterlite/files/_notebooks/
           else
             echo "No root files directory found, skipping custom content copy."
           fi
           echo "Contents of jupyterlite/files:"
-          find jupyterlite/files -maxdepth 3 -type f || true
+          find jupyterlite/files -maxdepth 4 -type f || true
 
       - name: Build JupyterLite
         working-directory: jupyterlite

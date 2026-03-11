@@ -1,6 +1,10 @@
 "LiteBuildConfig": {
     "contents": [
       "files",
-      "_notebooks"
+      ".notebooks"
     ]
+  }
+
+"ContentsManager": {
+    "allow_hidden": true
   }

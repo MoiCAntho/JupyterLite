@@ -36,43 +36,43 @@ jobs:
           echo "MAMBA_ROOT_PREFIX=$HOME/mamba-root" >> $GITHUB_ENV
           mkdir -p "$HOME/mamba-root"
 
-      - name: Copy notebooks into hidden JupyterLite folder
-        run: |
-          rm -rf jupyterlite/notebooks
-          mkdir -p jupyterlite/notebooks
-      
-          if [ -d files ]; then
-            cp -r files/. jupyterlite/notebooks/
-          fi
-      
-          echo "Copied notebooks:"
-          find jupyterlite/notebooks -maxdepth 4 -type f || true
-
       - name: Write JupyterLite config
         run: |
           cat > jupyterlite/jupyter_lite_config.json <<'EOF'
           {
             "LiteBuildConfig": {
               "contents": [
-                "files"
+                "notebooks"
               ]
             }
           }
           EOF
-
-          echo "----- jupyter_lite_config.json -----"
           cat jupyterlite/jupyter_lite_config.json
+
+      - name: Copy notebooks into JupyterLite notebooks folder
+        run: |
+          rm -rf jupyterlite/notebooks
+          mkdir -p jupyterlite/notebooks
+
+          if [ -d files ]; then
+            cp -r files/. jupyterlite/notebooks/
+          else
+            echo "No root files directory found."
+          fi
+
+          echo "Copied notebooks:"
+          find jupyterlite/notebooks -maxdepth 4 -type f || true
 
       - name: Build JupyterLite
         working-directory: jupyterlite
         run: |
           python -m jupyterlite build . \
-            --contents files \
+            --contents notebooks \
             --XeusAddon.environment_file=environment.yml
 
-      - name: Show generated files
+      - name: Show generated notebooks
         run: |
-          find jupyterlite/_output/files -maxdepth 4 -print || true
+          find jupyterlite/_output/notebooks -maxdepth 4 -print || true
 
       - name: Upload site
         uses: actions/upload-artifact@v4

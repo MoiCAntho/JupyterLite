@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install jupyterlite jupyterlite-xeus
+          pip install jupyterlite jupyterlite-xeus jupyter-server jupyterlab_server
 
 
       - name: Install micromamba

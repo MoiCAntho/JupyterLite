@@ -38,14 +38,14 @@ jobs:
 
       - name: Copy private notebooks into hidden JupyterLite folder
         run: |
-          rm -rf jupyterlite/files/.notebooks
-          mkdir -p jupyterlite/files/.notebooks
+          rm -rf jupyterlite/files/_notebooks
+          mkdir -p jupyterlite/files/_notebooks
           if [ -d files ]; then
-            cp -r files/. jupyterlite/files/.notebooks/
+            cp -r files/. jupyterlite/files/_notebooks/
           else
             echo "No root files directory found, skipping custom content copy."
           fi
-          find jupyterlite/files/.notebooks -maxdepth 4 -type f || true
+          find jupyterlite/files/_notebooks -maxdepth 4 -type f || true
 
       - name: Build JupyterLite
         working-directory: jupyterlite

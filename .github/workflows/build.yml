@@ -58,7 +58,7 @@ jobs:
           cfg = data.setdefault("jupyter-config-data", {})
           disabled = cfg.setdefault("disabledExtensions", [])
       
-          ext = "@jupyterlab/filebrowser-extension"
+          ext = "@jupyterlab/filebrowser-extension:widget"
           if ext not in disabled:
               disabled.append(ext)
       

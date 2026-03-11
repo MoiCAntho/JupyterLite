@@ -47,7 +47,7 @@ jobs:
           fi
           echo "Contents copied into jupyterlite/_notebooks:"
           find jupyterlite/_notebooks -maxdepth 4 -type f || true
-          
+
       - name: Build JupyterLite
         working-directory: jupyterlite
         run: |

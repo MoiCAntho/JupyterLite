@@ -18,10 +18,11 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install jupyterlite jupyterlite-xeus jupyter-server jupyterlab_server
+          pip install jupyterlab-open-url-parameter
 
       - name: Install micromamba
         run: |
@@ -36,45 +37,37 @@ jobs:
           echo "MAMBA_ROOT_PREFIX=$HOME/mamba-root" >> $GITHUB_ENV
           mkdir -p "$HOME/mamba-root"
 
-      - name: Write JupyterLite config
-        run: |
-          cat > jupyterlite/jupyter_lite_config.json <<'EOF'
-          {
-            "LiteBuildConfig": {
-              "contents": [
-                "notebooks"
-              ]
-            }
-          }
-          EOF
-          cat jupyterlite/jupyter_lite_config.json
-
-      - name: Copy notebooks into JupyterLite notebooks folder
-        run: |
-          rm -rf jupyterlite/notebooks
-          mkdir -p jupyterlite/notebooks
-
-          if [ -d files ]; then
-            cp -r files/. jupyterlite/notebooks/
-          else
-            echo "No root files directory found."
-          fi
-
-          echo "Copied notebooks:"
-          find jupyterlite/notebooks -maxdepth 4 -type f || true
-
-      - name: Build JupyterLite
+      - name: Build base JupyterLite
         working-directory: jupyterlite
         run: |
           python -m jupyterlite build . \
-            --contents notebooks \
             --XeusAddon.environment_file=environment.yml
 
-      - name: Show generated notebooks
+      - name: Create restrictive student app
         run: |
-          find jupyterlite/_output/notebooks -maxdepth 4 -print || true
+          rm -rf jupyterlite/_output/lab-eleves
+          cp -r jupyterlite/_output/lab jupyterlite/_output/lab-eleves
 
-      - name: Upload site
+          cat > jupyterlite/_output/lab-eleves/jupyter-lite.json <<'EOF'
+          {
+            "jupyter-lite-schema-version": 0,
+            "jupyter-config-data": {
+              "disabledExtensions": [
+                "@jupyterlab/filebrowser-extension"
+              ],
+              "workspacesStorageName": "JupyterLite Eleves Storage"
+            }
+          }
+          EOF
+
+      - name: Show generated tree
+        run: |
+          echo "===== output root ====="
+          find jupyterlite/_output -maxdepth 2 -type d | sort
+          echo "===== restrictive app config ====="
+          cat jupyterlite/_output/lab-eleves/jupyter-lite.json
+
+      - name: Upload generated site
         uses: actions/upload-artifact@v4
         with:
           name: jupyterlite-site
